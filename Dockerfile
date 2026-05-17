@@ -1,4 +1,7 @@
-FROM alpine:3.20
-LABEL org.opencontainers.image.title="php-stakeholder"
-LABEL org.opencontainers.image.description="Scaffold-only placeholder container for php-stakeholder"
-CMD ["sh", "-lc", "echo 'php-stakeholder scaffold-only baseline';"]
+FROM php:8.4-cli-alpine
+RUN apk add --no-cache bash
+WORKDIR /app
+COPY bin ./bin
+COPY tests ./tests
+RUN php -l bin/stakeholder.php && bash tests/test_cli.sh
+ENTRYPOINT ["php", "/app/bin/stakeholder.php"]

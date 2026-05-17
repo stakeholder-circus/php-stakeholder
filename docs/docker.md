@@ -1,9 +1,11 @@
-# Rust Docker
+# PHP Docker
 
 ## Build and test
-- `docker build -t rust-stakeholder .`
-- `docker run --rm rust-stakeholder --list-values`
+- `docker build -t php-stakeholder .`
+- `docker run --rm php-stakeholder --list-values`
+- `docker run --rm php-stakeholder --output-format json --focus-family platform_engineering --seed 123`
 
 ## Rationale
-- The image compiles and tests the Rust baseline before packaging the runtime binary.
-- Docker is the reproducible Linux gate; host and CI matrices still cover native OS behavior.
+- The image syntax-checks and contract-tests the PHP deterministic runtime before exposing the CLI entrypoint.
+- Docker is the reproducible Linux gate; host and CI matrices still cover native PHP CLI behavior.
+- The first tranche remains provider-free, so provider flags must fail fast inside the image as they do natively.

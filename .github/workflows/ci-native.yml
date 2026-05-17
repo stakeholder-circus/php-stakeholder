@@ -2,14 +2,21 @@ name: ci-native
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
-  scaffold-check:
-    runs-on: ubuntu-latest
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - run: python3 scripts/validate_scaffold.py
+      - name: PHP proof
+        run: php --version
+      - name: Syntax check
+        run: php -l bin/stakeholder.php
+      - name: Contract tests
+        run: bash tests/test_cli.sh

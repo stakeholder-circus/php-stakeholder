@@ -1,5 +1,5 @@
 {
-  description = "php-stakeholder scaffold";
+  description = "php-stakeholder deterministic first tranche";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
   outputs = { self, nixpkgs }:
     let
@@ -11,9 +11,11 @@
         in {
           check = pkgs.writeShellApplication {
             name = "check";
-            runtimeInputs = [ pkgs.python3 ];
+            runtimeInputs = [ pkgs.bash pkgs.php pkgs.python3 ];
             text = ''
               python3 scripts/validate_scaffold.py
+              php -l bin/stakeholder.php
+              bash tests/test_cli.sh
             '';
           };
           default = self.packages.${system}.check;

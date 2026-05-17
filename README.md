@@ -1,28 +1,28 @@
 > [!WARNING]
-> This repository is AI-assisted and manually reviewed. It is currently a local-only scaffold in the next-20 autonomous sprint.
+> This repository is AI-assisted and manually reviewed. It is currently a local-only deterministic rewrite in the next-20 autonomous sprint.
 
 # php-stakeholder
 
-PHP scaffold under stakeholder-circus.
+PHP deterministic `classic-six + modern-core` rewrite under stakeholder-circus.
 
 ## Status
-- Selected for the next-20 autonomous sprint.
+- Implemented for the next-20 autonomous sprint.
 - Local-only scaffold; no upstream tracking and no publication yet.
 - Default branch remains `main`; active work happens on the repo-specific baseline branch.
 
 ## Role
 - Deterministic full-parity target for the next-20 wave.
-- First tranche target is `classic-six + modern-core` with grouped fallback for later families.
+- First tranche target is implemented: `classic-six + modern-core` with grouped fallback for later families.
 - Full live-provider/runtime support remains a required follow-on wave.
 
-## Planned toolchain contract
-- Toolchain source: `repair-brew`
+## Toolchain contract
+- Toolchain source: `brew`
 - See [docs/toolchain.md](docs/toolchain.md) for exact prep commands.
 
 ## Current guardrail
 - Missing behavior must fail fast and be recorded in `GAPS.md`.
-- The scaffold baseline is authoritative until implementation starts.
-- Current PHP is broken on host; if repair fails in one attempt, replace this repo with objective-c-stakeholder.
+- Deterministic CI remains provider-free.
+- Host PHP is repaired and usable through Homebrew.
 
 ## Documentation
 - [STATUS.md](STATUS.md)
