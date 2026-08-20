@@ -8,13 +8,14 @@ $aiGovernance = ['ai_inference_ops', 'evaluation_and_guardrails', 'knowledge_ret
 $securityBlockchain = ['blockchain_protocol_ops', 'cross_chain_interop', 'proof_and_sequencer_ops'];
 $overlayQuantum = ['hybrid_runtime_ops', 'capacity_cost_controller', 'batch_execution_tuner', 'compiler_maintainer', 'interop_adapter_engineer', 'preflight_capacity_planner', 'simulator_performance_engineer'];
 $healthProtocol = ['fhir_profile_generator', 'smart_launch_oauth', 'bulk_fhir_population_ops', 'hl7v2_feed_ops', 'clinical_workflow_events', 'dicomweb_imaging_ops', 'openehr_semantic_record_ops', 'device_telemetry_clinical', 'emr_vendor_adapter', 'ocpp_chargepoint_ops', 'ocpi_roaming_ops', 'mcp_a2a_ops', 'streaming_bus_ops', 'service_mesh_rpc_ops'];
-$allFamilies = array_values(array_merge($classicSix, $modernCore, $aiGovernance, $securityBlockchain, $overlayQuantum, $healthProtocol));
+$allFamilies = array_merge($classicSix, $modernCore, $aiGovernance, $securityBlockchain, $overlayQuantum, $healthProtocol);
 
 function registry_id(string $family): string
 {
     return str_replace('_', '-', $family);
 }
 
+/** @param list<string> $allFamilies */
 function normalize_family(?string $value, array $allFamilies): ?string
 {
     if ($value === null || trim($value) === '') {
@@ -24,6 +25,11 @@ function normalize_family(?string $value, array $allFamilies): ?string
     return in_array($normalized, $allFamilies, true) ? $normalized : null;
 }
 
+/**
+ * @param list<string> $aiGovernance
+ * @param list<string> $securityBlockchain
+ * @param list<string> $overlayQuantum
+ */
 function fallback_group(string $family, array $aiGovernance, array $securityBlockchain, array $overlayQuantum): string
 {
     if (in_array($family, $aiGovernance, true)) {
@@ -38,8 +44,15 @@ function fallback_group(string $family, array $aiGovernance, array $securityBloc
     return 'health_protocol';
 }
 
+/**
+ * @param list<string> $aiGovernance
+ * @param list<string> $securityBlockchain
+ * @param list<string> $overlayQuantum
+ * @return array{rendererKey: string, tranche: string, contextKey: string, contextValue: string}
+ */
 function metadata_for(string $family, array $aiGovernance, array $securityBlockchain, array $overlayQuantum): array
 {
+    /** @var array<string, array{string, string, string, string}> $dedicated */
     $dedicated = [
         'code_analyzer' => ['classic-six.code_analyzer', 'classic-six', 'analysisFocus', 'php-contract-audit'],
         'data_processing' => ['classic-six.data_processing', 'classic-six', 'dataWindow', 'array-stream-reconciliation'],
@@ -64,7 +77,14 @@ function metadata_for(string $family, array $aiGovernance, array $securityBlockc
 function deterministic_hash(string $value): int
 {
     $hash = 2166136261;
-    foreach (unpack('C*', $value) as $byte) {
+    $bytes = unpack('C*', $value);
+    if ($bytes === false) {
+        throw new RuntimeException('failed to encode deterministic hash input');
+    }
+    foreach ($bytes as $byte) {
+        if (!is_int($byte)) {
+            throw new RuntimeException('deterministic hash input contained a non-byte value');
+        }
         $hash ^= $byte;
         $hash = ($hash * 16777619) & 0xffffffff;
     }
@@ -77,6 +97,15 @@ function timestamp_for(int $hash): string
     return sprintf('2026-01-01T%02d:%02d:%02dZ', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
 }
 
+/**
+ * @param list<string> $allFamilies
+ * @param list<string> $classicSix
+ * @param list<string> $modernCore
+ * @param list<string> $aiGovernance
+ * @param list<string> $securityBlockchain
+ * @param list<string> $overlayQuantum
+ * @param list<string> $healthProtocol
+ */
 function list_values_json(array $allFamilies, array $classicSix, array $modernCore, array $aiGovernance, array $securityBlockchain, array $overlayQuantum, array $healthProtocol): string
 {
     $families = [];
@@ -89,7 +118,7 @@ function list_values_json(array $allFamilies, array $classicSix, array $modernCo
             'tranche' => $meta['tranche'],
         ];
     }
-    return json_encode([
+    return encode_json([
         'outputFormats' => ['text', 'json'],
         'flags' => ['list-values', 'focus-family', 'output-format', 'seed', 'experimental-provider'],
         'generatorFamilies' => $families,
@@ -97,9 +126,30 @@ function list_values_json(array $allFamilies, array $classicSix, array $modernCo
         'modernCore' => array_map('registry_id', $modernCore),
         'fallbackFamilies' => array_map('registry_id', array_merge($aiGovernance, $securityBlockchain, $overlayQuantum, $healthProtocol)),
         'implementationMode' => 'family-focus-deterministic',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ]);
 }
 
+/**
+ * @param list<string> $aiGovernance
+ * @param list<string> $securityBlockchain
+ * @param list<string> $overlayQuantum
+ * @return array{
+ *   eventType: string,
+ *   sequence: int,
+ *   family: string,
+ *   message: string,
+ *   timestamp: string,
+ *   context: array<string, string>,
+ *   generationProvenance: array{
+ *     sourceRepo: string,
+ *     baseline: string,
+ *     experimental: bool,
+ *     adapterType: string,
+ *     promptVersion: null
+ *   },
+ *   outputFormat: string
+ * }
+ */
 function payload(string $family, string $seed, string $outputFormat, array $aiGovernance, array $securityBlockchain, array $overlayQuantum): array
 {
     $meta = metadata_for($family, $aiGovernance, $securityBlockchain, $overlayQuantum);
@@ -126,6 +176,11 @@ function payload(string $family, string $seed, string $outputFormat, array $aiGo
         ],
         'outputFormat' => $outputFormat,
     ];
+}
+
+function encode_json(mixed $value): string
+{
+    return json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
 }
 
 function fail(string $message): int
@@ -187,7 +242,7 @@ if ($focusFamily === null) {
 
 $payload = payload($focusFamily, $seed, $outputFormat, $aiGovernance, $securityBlockchain, $overlayQuantum);
 if ($outputFormat === 'json') {
-    echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    echo encode_json($payload);
     exit(0);
 }
 
