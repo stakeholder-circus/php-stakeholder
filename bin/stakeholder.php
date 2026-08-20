@@ -82,7 +82,10 @@ function deterministic_hash(string $value): int
         throw new RuntimeException('failed to encode deterministic hash input');
     }
     foreach ($bytes as $byte) {
-        $hash ^= (int) $byte;
+        if (!is_int($byte)) {
+            throw new RuntimeException('deterministic hash input contained a non-byte value');
+        }
+        $hash ^= $byte;
         $hash = ($hash * 16777619) & 0xffffffff;
     }
     return $hash;
